@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SMPus-Sangkali (Sistem Manajemem Kegiatan)
 
-## Getting Started
+Sistem Informasi Manajemen Kegiatan Puskesmas yang dirancang untuk membantu pengelolaan jadwal kegiatan, penempatan petugas pelayanan, serta proses penyusunan jadwal secara otomatis. Sistem ini juga mendukung integrasi dengan Google Sheets untuk mempermudah pengelolaan data kegiatan.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+* Activity management
+* Personnel assignment
+* Google Sheets synchronization
+* Automatic schedule randomization
+* Activity history
+* Search and filtering
+* Excel export
+* PDF export
+* Role-based authentication
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Frontend
 
-## Learn More
+* Next.js
+* TypeScript
+* Tailwind CSS
+* React
+* React Hot Toast
+* Lucide React
 
-To learn more about Next.js, take a look at the following resources:
+### Backend
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+* Django
+* Django REST Framework
+* PostgreSQL
+* Token Authentication
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Libraries
 
-## Deploy on Vercel
+* ExcelJS
+* jsPDF
+* jspdf-autotable
+* date-fns
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Usage
+
+### Admin
+
+* Login menggunakan akun admin.
+* Mengelola data kegiatan.
+* Menentukan penempatan petugas pelayanan.
+* Menghasilkan jadwal secara otomatis (randomize).
+* Sinkronisasi data melalui Google Sheets.
+* Melihat riwayat kegiatan.
+* Mengekspor data ke format Excel atau PDF.
+
+### User
+
+* Melihat jadwal kegiatan.
+* Mencari jadwal kegiatan.
+* Melihat riwayat kegiatan.
+
+---
