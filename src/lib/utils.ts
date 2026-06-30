@@ -22,6 +22,100 @@ export const bulanOptions: string[] = [
   'Juli','Agustus','September','Oktober','November','Desember'
 ];
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// URUTAN TETAP KEGIATAN (SESUAI TEMPLATE)
+// ═══════════════════════════════════════════════════════════════════════════════
+export const URUTAN_DALAM_GEDUNG: string[] = [
+  'PENDAFTARAN',
+  'SKRINING ILP 1',
+  'SKRINING ILP 2',
+  'POLI PROLANIS',
+  'KLASTER DEWASA-LANSIA 1',
+  'KLASTER DEWASA-LANSIA 2',
+  'KLASTER IBU KIA & USG',
+  'KLASTER ANAK',
+  'R. IMUNISASI',
+  'R. TINDAKAN',
+  'BP GIGI',
+  'APOTEK',
+  'LAB',
+  'R. TB',
+  'ADMINISTRASI',
+  'PIKET PERSALINAN PAGI',
+  'PIKET PERSALINAN SORE',
+  'PIKET PERSALINAN MALAM',
+  'LIBUR PIKET PERSALINAN',
+  'PELAYANAN PUSTU',
+];
+
+export const URUTAN_LUAR_GEDUNG: string[] = [
+  'Pelacakan dan pengawasan minum obat untuk ODGJ Berat',
+  'Pelacakan dan pelaporan kematian dan pelaksanaan otopsi verbal kematian Bayi/balita',
+  'Pelaksanaan Kelas Ibu Hamil',
+  'Skrining Kesehatan di Sekolah',
+  'Pembinaan Kesehatan di Sekolah',
+  'Pembinaan Kesehatan di Komunitas',
+  'Pelaksanaan skrining dan intervensi hasil skrining masalah Kesehatan jiwa di UKBM/Lembaga',
+  'Kunjungan Lapangan Bumil Masalah Gizi',
+  'Kunjungan Lapangan Bayi Balita Masalah Gizi',
+  'Pendampingan rujukan balita stunting/gizi buruk',
+  'Sosialisasi Penyelenggaraan Imunisasi',
+  'Pelaksanaan Imunisasi Bayi dan baduta di posyandu',
+  'Pelayanan Imunisasi Kejar',
+  'Deteksi dini dan cek kesehatan gratis di masyarakat',
+  'Pemantauan dan tindak lanjut penyakit tidak menular',
+  'Inspeksi Kesehatan Lingkungan (IKL) di sarana fasilitas umum',
+  'Inspeksi Kesehatan Lingkungan di Sarana Tempat Pengolahan Pangan (TPP)',
+  'Inspeksi Kesehatan Lingkungan di Sarana Air Minum',
+  'Pemberdayaan kader masyarakat melalui pemicuan untuk implementasi pilar 2-5 STBM',
+  'Monitoring Pemberdayaan kader masyarakat melalui pemicuan untuk implementasi pilar 2-5 STBM',
+  'Verifikasi Pemberdayaan kader masyarakat melalui pemicuan untuk implementasi pilar 2-5 STBM',
+  'Pemantauan minum obat dan terapi pencegahan TBC',
+  'Penemuan Kasus Aktif TB',
+  'Pelacakan Kasus Mangkir',
+  'Investigasi Kasus TB',
+  'Penemuan kasus dan deteksi dini pneumonia',
+  'Kunjungan ulang 60 hari AFP',
+  'Penemuan dan tindak lanjut penyakit tropis terabaikan',
+  'Pemantauan bayi usia 9-12 bulan yang lahir dari ibu Hepatitis B',
+  'Pemantauan status bayi dari ibu positif HIV/sifilis',
+  'Pemeriksaan Jentik Nyamuk (survei Vektor DBD)',
+  'PSN oleh kader G1R1J',
+  'Larvasidasi DBD',
+  'Pengasapan Atau Fogging Nyamuk',
+  'Surveilans Kualitas Air Minum Rumah Tangga (KAMRT)',
+  'Penyelidikan Kasus Epidemiologi Penyakit Kasus Penyakit menular',
+  'Verifikasi Sinyal penyakit potensial wabah/KLB',
+  'Penyelidikan Epidimiologi Penyakit Arbovirosis',
+  'Penyelidikan Epidimiologi Penyakit Zoonosis',
+  'Pendampingan pelaksanaan ILP di pustu dan Unit Pelayanan Kesehatan Desa/Kelurahan (UPKD/K)',
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPER: SORT KEGIATAN BERDASARKAN URUTAN TETAP
+// ═══════════════════════════════════════════════════════════════════════════════
+function sortKegiatanByOrder(
+  items: { kegiatan: string; hari: Record<string, string> }[],
+  orderArray: string[]
+): { kegiatan: string; hari: Record<string, string> }[] {
+  return [...items].sort((a, b) => {
+    const indexA = orderArray.findIndex(k => 
+      k.toUpperCase() === a.kegiatan.toUpperCase() ||
+      k.toUpperCase().replace(/\s+/g, '') === a.kegiatan.toUpperCase().replace(/\s+/g, '')
+    );
+    const indexB = orderArray.findIndex(k => 
+      k.toUpperCase() === b.kegiatan.toUpperCase() ||
+      k.toUpperCase().replace(/\s+/g, '') === b.kegiatan.toUpperCase().replace(/\s+/g, '')
+    );
+    
+    // Jika tidak ada di array urutan, taruh di akhir
+    const safeIndexA = indexA === -1 ? 9999 : indexA;
+    const safeIndexB = indexB === -1 ? 9999 : indexB;
+    
+    return safeIndexA - safeIndexB;
+  });
+}
+
 // ─── GROUP BY WEEK ──────────────────────────────────────────────────────────
 function groupByWeek(data: Kegiatan[]): Map<string, Kegiatan[]> {
   const weeks = new Map<string, Kegiatan[]>();
@@ -98,7 +192,9 @@ function pivotByHari(data: Kegiatan[]): { kegiatan: string; hari: Record<string,
   });
 }
 
-// ─── GENERATE EXCEL (SESUAI TEMPLATE) ───────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// GENERATE EXCEL (SESUAI TEMPLATE)
+// ═══════════════════════════════════════════════════════════════════════════════
 export async function generateExcel(data: Kegiatan[], filename = 'jadwal.xlsx'): Promise<void> {
   if (!data.length) return;
   
@@ -119,7 +215,16 @@ export async function generateExcel(data: Kegiatan[], filename = 'jadwal.xlsx'):
     const dates = weekData.map(d => new Date(d.tanggal));
     const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
     const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
-    const tanggalRange = `${formatTanggal(minDate.toISOString().slice(0, 10), false).toUpperCase()} S/D ${formatTanggal(maxDate.toISOString().slice(0, 10), false).toUpperCase()}`;
+    
+    // Format subtitle sesuai template (1 JUNI 2026 S/D 7 JUNI 2026)
+    const formatRange = (date: Date) => {
+      const day = date.getDate();
+      const month = date.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
+      const year = date.getFullYear();
+      return `${day} ${month} ${year}`;
+    };
+    
+    const tanggalRange = `${formatRange(minDate)} S/D ${formatRange(maxDate)}`;
     
     const headerHariData = getHeaderHariDenganTanggal(weekData);
     const headerHariLabels = headerHariData.map(h => h.label);
@@ -131,7 +236,7 @@ export async function generateExcel(data: Kegiatan[], filename = 'jadwal.xlsx'):
     
     let currentRow = 1;
     
-    // Title - hitam (sesuai template)
+    // Title sesuai template
     worksheet.mergeCells(`A${currentRow}:H${currentRow}`);
     const titleCell = worksheet.getCell(`A${currentRow}`);
     titleCell.value = 'JADWAL PELAYANAN PUSKESMAS SANGKALI';
@@ -152,9 +257,12 @@ export async function generateExcel(data: Kegiatan[], filename = 'jadwal.xlsx'):
     const dalamGedung = weekData.filter(d => d.kategori === 'dalam_gedung');
     const luarGedung = weekData.filter(d => d.kategori === 'luar_gedung');
     
-    // Helper: render section table
-    const renderSection = (sectionTitle: string, items: { kegiatan: string; hari: Record<string, string> }[]) => {
+    // Helper: render section table dengan urutan tetap
+    const renderSection = (sectionTitle: string, items: { kegiatan: string; hari: Record<string, string> }[], urutan: string[]) => {
       if (items.length === 0) return;
+      
+      // Sort kegiatan sesuai urutan template
+      const sortedItems = sortKegiatanByOrder(items, urutan);
       
       // Header baris: section title sebagai kolom pertama
       const headerRow = worksheet.getRow(currentRow);
@@ -186,8 +294,8 @@ export async function generateExcel(data: Kegiatan[], filename = 'jadwal.xlsx'):
       
       currentRow++;
       
-      // Data rows - tanpa background warna (sesuai template)
-      items.forEach((row) => {
+      // Data rows
+      sortedItems.forEach((row) => {
         const dataRow = worksheet.getRow(currentRow);
         dataRow.values = [row.kegiatan, ...hariList.map(h => row.hari[h] || '')];
         dataRow.alignment = { vertical: 'top', wrapText: true };
@@ -195,11 +303,12 @@ export async function generateExcel(data: Kegiatan[], filename = 'jadwal.xlsx'):
         
         dataRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           if (colNumber <= 8) {
-            // Cell kosong = abu-abu (sesuai template)
+            // Cell kosong = abu-abu
             const isEmpty = !cell.value || cell.value.toString().trim() === '';
             if (isEmpty) {
               cell.fill = GRAY_FILL;
             }
+            
             cell.border = {
               top: { style: 'thin' },
               left: { style: 'thin' },
@@ -215,16 +324,16 @@ export async function generateExcel(data: Kegiatan[], filename = 'jadwal.xlsx'):
       currentRow += 2;
     };
     
-    // Render section Dalam Gedung
+    // Render section Dalam Gedung dengan urutan template
     if (dalamGedung.length > 0) {
       const pivoted = pivotByHari(dalamGedung);
-      renderSection('RUANG PELAYANAN', pivoted);
+      renderSection('RUANG PELAYANAN', pivoted, URUTAN_DALAM_GEDUNG);
     }
     
-    // Render section Luar Gedung
+    // Render section Luar Gedung dengan urutan template
     if (luarGedung.length > 0) {
       const pivoted = pivotByHari(luarGedung);
-      renderSection('KEGIATAN LUAR GEDUNG', pivoted);
+      renderSection('KEGIATAN LUAR GEDUNG', pivoted, URUTAN_LUAR_GEDUNG);
     }
   });
   
@@ -237,7 +346,8 @@ export async function generateExcel(data: Kegiatan[], filename = 'jadwal.xlsx'):
   a.click();
   URL.revokeObjectURL(url);
 }
-// ─── GENERATE PDF ─────────────────────────────
+
+// ─── GENERATE PDF ───────────────────────────────────────────────────────────
 export function generatePDF(data: Kegiatan[], title = 'JADWAL PELAYANAN PUSKESMAS SANGKALI'): void {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const weeks = groupByWeek(data);
@@ -263,7 +373,16 @@ export function generatePDF(data: Kegiatan[], title = 'JADWAL PELAYANAN PUSKESMA
     const dates = weekData.map(d => new Date(d.tanggal));
     const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
     const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
-    const tanggalRange = `${formatTanggal(minDate.toISOString().slice(0, 10), false).toUpperCase()} S/D ${formatTanggal(maxDate.toISOString().slice(0, 10), false).toUpperCase()}`;
+    
+    // Format subtitle sesuai template
+    const formatRange = (date: Date) => {
+      const day = date.getDate();
+      const month = date.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
+      const year = date.getFullYear();
+      return `${day} ${month} ${year}`;
+    };
+    
+    const tanggalRange = `${formatRange(minDate)} S/D ${formatRange(maxDate)}`;
     
     // Title - hitam, horizontal
     doc.setFontSize(14);
@@ -284,12 +403,15 @@ export function generatePDF(data: Kegiatan[], title = 'JADWAL PELAYANAN PUSKESMA
     
     let startY = 22;
     
-    // Helper untuk render table
-    const renderSection = (sectionTitle: string, items: { kegiatan: string; hari: Record<string, string> }[]) => {
+    // Helper untuk render table dengan urutan tetap
+    const renderSection = (sectionTitle: string, items: { kegiatan: string; hari: Record<string, string> }[], urutan: string[]) => {
       if (items.length === 0) return;
       
+      // Sort kegiatan sesuai urutan template
+      const sortedItems = sortKegiatanByOrder(items, urutan);
+      
       // Siapkan data rows dengan nama stacked vertikal
-      const rows = items.map(row => [
+      const rows = sortedItems.map(row => [
         row.kegiatan,
         ...hariList.map(h => formatNamesVertical(row.hari[h] || ''))
       ]);
@@ -379,20 +501,20 @@ export function generatePDF(data: Kegiatan[], title = 'JADWAL PELAYANAN PUSKESMA
       startY = (doc as any).lastAutoTable.finalY + 5;
     };
     
-    // Render RUANG PELAYANAN (dalam gedung)
+    // Render RUANG PELAYANAN (dalam gedung) dengan urutan template
     if (dalamGedung.length > 0) {
       const pivoted = pivotByHari(dalamGedung);
-      renderSection('RUANG PELAYANAN', pivoted);
+      renderSection('RUANG PELAYANAN', pivoted, URUTAN_DALAM_GEDUNG);
     }
     
-    // Render KEGIATAN LUAR GEDUNG
+    // Render KEGIATAN LUAR GEDUNG dengan urutan template
     if (luarGedung.length > 0) {
       if (startY > pageHeight - 30) {
         doc.addPage();
         startY = 10;
       }
       const pivoted = pivotByHari(luarGedung);
-      renderSection('KEGIATAN LUAR GEDUNG', pivoted);
+      renderSection('KEGIATAN LUAR GEDUNG', pivoted, URUTAN_LUAR_GEDUNG);
     }
   });
   

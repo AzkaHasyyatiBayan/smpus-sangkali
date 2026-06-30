@@ -5,7 +5,7 @@ import { apiPost } from '@/lib/api';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import toast from 'react-hot-toast';
-import { Shuffle, AlertCircle, Calendar, Save, Eye, Edit2, X, Building2, HeartPulse, Users, School, LucideIcon } from 'lucide-react';
+import { Shuffle, AlertCircle, Calendar, Save, Eye, Edit2, X, Building2, HeartPulse, Users, LucideIcon } from 'lucide-react';
 
 interface PreviewItem {
   tanggal: string;
@@ -16,34 +16,33 @@ interface PreviewItem {
   sub_kategori?: string;
 }
 
-type SectionType = 'dalam_gedung' | 'bok' | 'lainnya' | 'sekolah';
+type SectionType = 'dalam_gedung' | 'bok' | 'lainnya';
 
 export default function RandomizeJadwal() {
   const [bulan, setBulan] = useState(new Date().getMonth() + 1);
   const [tahun, setTahun] = useState(new Date().getFullYear());
   const [lokaKarya, setLokaKarya] = useState(false);
   const [loading, setLoading] = useState<Record<SectionType, boolean>>({
-    dalam_gedung: false, bok: false, lainnya: false, sekolah: false
+    dalam_gedung: false, bok: false, lainnya: false
   });
   
   const [previews, setPreviews] = useState<Record<SectionType, PreviewItem[] | null>>({
-    dalam_gedung: null, bok: null, lainnya: null, sekolah: null
+    dalam_gedung: null, bok: null, lainnya: null
   });
   const [skipped, setSkipped] = useState<Record<SectionType, string[]>>({
-    dalam_gedung: [], bok: [], lainnya: [], sekolah: []
+    dalam_gedung: [], bok: [], lainnya: []
   });
   const [editingIndex, setEditingIndex] = useState<Record<SectionType, number | null>>({
-    dalam_gedung: null, bok: null, lainnya: null, sekolah: null
+    dalam_gedung: null, bok: null, lainnya: null
   });
   const [editData, setEditData] = useState<Record<SectionType, Partial<PreviewItem>>>({
-    dalam_gedung: {}, bok: {}, lainnya: {}, sekolah: {}
+    dalam_gedung: {}, bok: {}, lainnya: {}
   });
 
   const endpoints: Record<SectionType, string> = {
     dalam_gedung: 'randomize-dalam-gedung/',
     bok: 'randomize-luar-gedung-bok/',
     lainnya: 'randomize-luar-gedung-lainnya/',
-    sekolah: 'randomize-sekolah/',
   };
 
   const sectionConfig: Record<SectionType, { label: string; icon: LucideIcon; color: string; description: string }> = {
@@ -54,22 +53,16 @@ export default function RandomizeJadwal() {
       description: 'Jadwal ruangan dalam gedung puskesmas (Pendaftaran, Poli, Klaster, dll)'
     },
     bok: {
-      label: 'Luar Gedung - BOK',
+      label: 'BOK (Bantuan Operasional Kesehatan)',
       icon: HeartPulse,
       color: 'from-purple-500/10 to-pink-500/10',
-      description: '31 kegiatan BOK (Pelacakan ODGJ, Inspeksi Kesehatan, STBM, dll)'
+      description: '31 kegiatan BOK + Sekolah/Pesantren (Pelacakan ODGJ, Inspeksi, STBM, Skrining Sekolah, dll)'
     },
     lainnya: {
-      label: 'Posyandu / Posbindu / UKK / Pos Remaja',
+      label: 'Pelayanan Luar Gedung',
       icon: Users,
       color: 'from-green-500/10 to-emerald-500/10',
       description: 'Jadwal tetap Posyandu, Posbindu, UKK, dan Pos Remaja sesuai jadwal buka'
-    },
-    sekolah: {
-      label: 'Sekolah / Pesantren',
-      icon: School,
-      color: 'from-orange-500/10 to-red-500/10',
-      description: 'Skrining dan Pembinaan Kesehatan di Sekolah/Pesantren'
     },
   };
 
@@ -323,7 +316,7 @@ export default function RandomizeJadwal() {
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-bold text-puskesmas-900">Randomize Jadwal</h3>
-            <p className="text-sm text-gray-500 mt-1">Generate jadwal otomatis bertahap: Dalam Gedung → BOK → Posyandu/Lainnya → Sekolah</p>
+            <p className="text-sm text-gray-500 mt-1">Generate jadwal otomatis bertahap: Dalam Gedung → BOK → Pelayanan Luar Gedung</p>
           </div>
         </div>
 
@@ -372,7 +365,6 @@ export default function RandomizeJadwal() {
       {renderSection('dalam_gedung')}
       {renderSection('bok')}
       {renderSection('lainnya')}
-      {renderSection('sekolah')}
     </div>
   );
 }
