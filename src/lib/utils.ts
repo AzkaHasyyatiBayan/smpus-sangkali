@@ -192,7 +192,7 @@ function pivotByHari(data: Kegiatan[]): { kegiatan: string; hari: Record<string,
   });
 }
 // GENERATE EXCEL
-export async function generateExcel(data: Kegiatan[]): Promise<void> {
+export async function generateExcel(data: Kegiatan[], filename = 'jadwal.xlsx'): Promise<void> {
   if (!data.length) return;
   
   const workbook = new ExcelJS.Workbook();
@@ -203,8 +203,9 @@ export async function generateExcel(data: Kegiatan[]): Promise<void> {
   const bulanName = minDate.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
   const tahun = minDate.getFullYear();
   
-  // Nama file: DATABASE KEGIATAN [BULAN] [TAHUN].xlsx
-  const actualFilename = `DATABASE KEGIATAN ${bulanName} ${tahun}.xlsx`;
+  const actualFilename = filename !== 'jadwal.xlsx' 
+    ? filename 
+    : `DATABASE KEGIATAN ${bulanName} ${tahun}.xlsx`;
   
   // Buat 1 sheet saja (tidak per minggu)
   const worksheet = workbook.addWorksheet('DATABASE KEGIATAN');
@@ -337,7 +338,6 @@ export async function generateExcel(data: Kegiatan[]): Promise<void> {
     const lokasiDisplay = getLokasiDisplay(item); 
     
     if (penyertaList.length === 0) {
-      // Jika tidak ada penyerta, tetap buat 1 baris dengan pelaksana kosong
       flatRows.push({
         tanggal: item.tanggal,
         nama_kegiatan: item.kegiatan,
@@ -347,7 +347,6 @@ export async function generateExcel(data: Kegiatan[]): Promise<void> {
         kategori: kategori,
       });
     } else {
-      // 1 pelaksana per baris
       penyertaList.forEach((pelaksana) => {
         flatRows.push({
           tanggal: item.tanggal,
@@ -363,17 +362,14 @@ export async function generateExcel(data: Kegiatan[]): Promise<void> {
 
   // SORT DATA
   flatRows.sort((a, b) => {
-    // 1. Sort tanggal (ascending)
     const dateA = new Date(a.tanggal).getTime();
     const dateB = new Date(b.tanggal).getTime();
     if (dateA !== dateB) return dateA - dateB;
     
-    // 2. Sort kategori (Dalam Gedung dulu, baru Luar Gedung)
     if (a.kategori !== b.kategori) {
       return a.kategori === 'DALAM GEDUNG' ? -1 : 1;
     }
     
-    // 3. Sort nama kegiatan sesuai urutan template
     const allUrutan = [...URUTAN_DALAM_GEDUNG, ...URUTAN_LUAR_GEDUNG];
     const indexA = allUrutan.findIndex(k => 
       k.toUpperCase() === a.nama_kegiatan.toUpperCase() ||
@@ -396,10 +392,9 @@ export async function generateExcel(data: Kegiatan[]): Promise<void> {
   headerRow.values = headers;
   headerRow.font = { bold: true, size: 11, color: { argb: 'FF000000' } };
   headerRow.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
-  headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } }; // Abu-abu
+  headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
   headerRow.height = 25;
   
-  // Border header
   headerRow.eachCell({ includeEmpty: true }, (cell) => {
     cell.border = {
       top: { style: 'thin' },
@@ -410,40 +405,37 @@ export async function generateExcel(data: Kegiatan[]): Promise<void> {
   });
 
   // LEBAR KOLOM
-  worksheet.getColumn(1).width = 6;   // NO
-  worksheet.getColumn(2).width = 14;  // TANGGAL
-  worksheet.getColumn(3).width = 85;  // NAMA KEGIATAN
-  worksheet.getColumn(4).width = 45;  // PELAKSANA
-  worksheet.getColumn(5).width = 35;  // LOKASI
-  worksheet.getColumn(6).width = 15;  // KELURAHAN
-  worksheet.getColumn(7).width = 18;  // KATEGORI
+  worksheet.getColumn(1).width = 6;
+  worksheet.getColumn(2).width = 14;
+  worksheet.getColumn(3).width = 85;
+  worksheet.getColumn(4).width = 45;
+  worksheet.getColumn(5).width = 35;
+  worksheet.getColumn(6).width = 15;
+  worksheet.getColumn(7).width = 18;
   
   // DATA ROWS
   flatRows.forEach((row, idx) => {
     const dataRow = worksheet.getRow(idx + 2);
     dataRow.values = [
-      idx + 1,                              // NO
-      formatTanggalExcel(row.tanggal),      // TANGGAL
-      row.nama_kegiatan,                    // NAMA KEGIATAN
-      row.pelaksana,                        // PELAKSANA
-      row.lokasi,                           // LOKASI (sudah di-transform: "Puskesmas" untuk dalam gedung)
-      row.kelurahan,                        // KELURAHAN
-      row.kategori,                         // KATEGORI
+      idx + 1,
+      formatTanggalExcel(row.tanggal),
+      row.nama_kegiatan,
+      row.pelaksana,
+      row.lokasi,
+      row.kelurahan,
+      row.kategori,
     ];
     
-    // Alignment per kolom
-    dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: false }; // NO
-    dataRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle', wrapText: false }; // TANGGAL
-    dataRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };   // NAMA KEGIATAN
-    dataRow.getCell(4).alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };   // PELAKSANA
-    dataRow.getCell(5).alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };   // LOKASI
-    dataRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle', wrapText: false }; // KELURAHAN
-    dataRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle', wrapText: false }; // KATEGORI
+    dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
+    dataRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
+    dataRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };
+    dataRow.getCell(4).alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };
+    dataRow.getCell(5).alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };
+    dataRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
+    dataRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
     
-    // Font normal (tidak bold)
     dataRow.font = { size: 11 };
     
-    // Border tipis
     dataRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
       if (colNumber <= 7) {
         cell.border = {
@@ -464,7 +456,7 @@ export async function generateExcel(data: Kegiatan[]): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = actualFilename; // Nama file: DATABASE KEGIATAN [BULAN] [TAHUN].xlsx
+  a.download = actualFilename;
   a.click();
   URL.revokeObjectURL(url);
 }
