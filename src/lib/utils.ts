@@ -191,158 +191,280 @@ function pivotByHari(data: Kegiatan[]): { kegiatan: string; hari: Record<string,
     return { kegiatan, hari: hariFormatted };
   });
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// GENERATE EXCEL (SESUAI TEMPLATE)
-// ═══════════════════════════════════════════════════════════════════════════════
-export async function generateExcel(data: Kegiatan[], filename = 'jadwal.xlsx'): Promise<void> {
+// GENERATE EXCEL
+export async function generateExcel(data: Kegiatan[]): Promise<void> {
   if (!data.length) return;
   
   const workbook = new ExcelJS.Workbook();
-  const weeks = groupByWeek(data);
-  const hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
   
-  // Warna sesuai template
-  const GRAY_FILL = { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FFE5E7EB' } };
-  const MERAH_FILL = { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FFDC2626' } };
+  // Extract bulan dan tahun dari data untuk nama file
+  const dates = data.map(d => new Date(d.tanggal));
+  const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+  const bulanName = minDate.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
+  const tahun = minDate.getFullYear();
   
-  weeks.forEach((weekData, weekKey) => {
-    const weekNum = weekKey.split('W')[1];
-    const sheetName = `Minggu ${weekNum}`;
+  // Nama file: DATABASE KEGIATAN [BULAN] [TAHUN].xlsx
+  const actualFilename = `DATABASE KEGIATAN ${bulanName} ${tahun}.xlsx`;
+  
+  // Buat 1 sheet saja (tidak per minggu)
+  const worksheet = workbook.addWorksheet('DATABASE KEGIATAN');
+  
+  // MAPPING LOKASI KE KELURAHAN
+  const lokasiToKelurahan: Record<string, string> = {
+    // Dalam Gedung
+    'Dalam Gedung': 'Tamansari',
+    'Pustu Ciangir': 'Tamansari',
+    'Pustu Sumelap': 'Sumelap',
     
-    const worksheet = workbook.addWorksheet(sheetName);
+    // Posyandu - SUMELAP
+    'Posyandu Cieurih': 'Sumelap',
+    'Posyandu Liunggunung': 'Sumelap',
+    'Posyandu Kadupandak': 'Sumelap',
+    'Posyandu Perum Puri Sumelap': 'Sumelap',
+    'Posyandu Babakan Jati': 'Sumelap',
+    'Posyandu Sumelap': 'Sumelap',
+    'Posyandu Sukaasih': 'Sumelap',
+    'Posyandu Perum Sukawening': 'Sumelap',
+    'Posyandu Cigintung': 'Sumelap',
+    'Posyandu Ciharashas': 'Sumelap',
     
-    const dates = weekData.map(d => new Date(d.tanggal));
-    const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
-    const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+    // Posyandu - TAMANJAYA
+    'Posyandu Kubangsari': 'Tamanjaya',
+    'Posyandu Malingping': 'Tamanjaya',
+    'Posyandu Sindangreret': 'Tamanjaya',
+    'Posyandu Karisma': 'Tamanjaya',
+    'Posyandu Cibeureum': 'Tamanjaya',
+    'Posyandu Nagarasari': 'Tamanjaya',
+    'Posyandu Situdukun': 'Tamanjaya',
+    'Posyandu Gegernoong': 'Tamanjaya',
+    'Posyandu Taman': 'Tamanjaya',
+    'Posyandu Harapan Bunda': 'Tamanjaya',
+    'Posyandu Kasih Bunda': 'Tamanjaya',
+    'Posyandu Cidahu': 'Tamanjaya',
+    'Posyandu Perum Nusa Indah': 'Tamanjaya',
+    'Posyandu Bantarsari': 'Tamanjaya',
     
-    // Format subtitle sesuai template (1 JUNI 2026 S/D 7 JUNI 2026)
-    const formatRange = (date: Date) => {
-      const day = date.getDate();
-      const month = date.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
-      const year = date.getFullYear();
-      return `${day} ${month} ${year}`;
-    };
+    // Posyandu - MUGARSARI
+    'Posyandu Selaawi': 'Mugarsari',
+    'Posyandu Sidamulih': 'Mugarsari',
+    'Posyandu Bbk.Cipasung': 'Mugarsari',
+    'Posyandu Nangela': 'Mugarsari',
+    'Posyandu Jatiwangi': 'Mugarsari',
+    'Posyandu Cipasung': 'Mugarsari',
+    'Posyandu Kubang': 'Mugarsari',
+    'Posyandu Nyantong': 'Mugarsari',
     
-    const tanggalRange = `${formatRange(minDate)} S/D ${formatRange(maxDate)}`;
+    // Posyandu - TAMANSARI
+    'Posyandu Sinargalih': 'Tamansari',
+    'Posyandu Ciatal': 'Tamansari',
+    'Posyandu Bandung': 'Tamansari',
+    'Posyandu Cipajaran': 'Tamansari',
+    'Posyandu Situhiang': 'Tamansari',
+    'Posyandu Ciledug': 'Tamansari',
+    'Posyandu Selakaso': 'Tamansari',
+    'Posyandu Cipamutih': 'Tamansari',
+    'Posyandu Sangkali': 'Tamansari',
+    'Posyandu Ciangir': 'Tamansari',
+    'Posyandu Cipangebak': 'Tamansari',
     
-    const headerHariData = getHeaderHariDenganTanggal(weekData);
-    const headerHariLabels = headerHariData.map(h => h.label);
+    // Posbindu
+    'Posbindu Cigintung': 'Sumelap',
+    'Posbindu Sindangreret': 'Tamanjaya',
+    'Posbindu Sidamulih': 'Mugarsari',
+    'Posbindu Sumelap': 'Sumelap',
+    'Posbindu Taman': 'Tamanjaya',
+    'Posbindu Jatiwangi': 'Mugarsari',
+    'Posbindu Cipamutih': 'Tamansari',
+    'Posbindu Nagarasari': 'Tamanjaya',
+    'Posbindu Sukaasih': 'Sumelap',
+    'Posbindu Cidahu': 'Tamanjaya',
+    'Posbindu Perum Tamanjaya': 'Tamanjaya',
+    'Posbindu Sindangreret RW 05': 'Tamanjaya',
     
-    worksheet.getColumn(1).width = 35;
-    for (let i = 2; i <= 8; i++) {
-      worksheet.getColumn(i).width = 18;
+    // Pos Remaja
+    'Pos Yandu Remaja Kereta': 'Tamanjaya',
+    'Pos Yandu Remaja Sakura': 'Tamanjaya',
+    
+    // UKK
+    'CV. Katumbiri': 'Sumelap',
+    'Pasar Geger Noong': 'Tamanjaya',
+    
+    // Sekolah/Pesantren
+    'SMP Bustanul Ulum': 'Sumelap',
+    'MI dan MTS Al Hidayah': 'Tamansari',
+  };
+  
+  const getKelurahan = (lokasi: string): string => {
+    return lokasiToKelurahan[lokasi] || 'Tamansari';
+  };
+  
+  const getKategori = (kategori: string): string => {
+    return kategori === 'dalam_gedung' ? 'DALAM GEDUNG' : 'LUAR GEDUNG';
+  };
+  
+  const getLokasiDisplay = (item: Kegiatan): string => {
+    if (item.kategori === 'dalam_gedung') {
+      return 'Puskesmas';
     }
+    return item.lokasi;
+  };
+  
+  // Format tanggal: DD/MM/YYYY
+  const formatTanggalExcel = (tanggal: string): string => {
+    const date = new Date(tanggal);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+  
+  // TRANSFORM DATA KE FORMAT FLAT
+  interface FlatRow {
+    tanggal: string;
+    nama_kegiatan: string;
+    pelaksana: string;
+    lokasi: string;
+    kelurahan: string;
+    kategori: string;
+  }
+  
+  const flatRows: FlatRow[] = [];
+  
+  data.forEach(item => {
+    const penyertaList = parsePenyerta(item.penyerta);
+    const kelurahan = getKelurahan(item.lokasi);
+    const kategori = getKategori(item.kategori);
+    const lokasiDisplay = getLokasiDisplay(item); 
     
-    let currentRow = 1;
-    
-    // Title sesuai template
-    worksheet.mergeCells(`A${currentRow}:H${currentRow}`);
-    const titleCell = worksheet.getCell(`A${currentRow}`);
-    titleCell.value = 'JADWAL PELAYANAN PUSKESMAS SANGKALI';
-    titleCell.font = { size: 16, bold: true, color: { argb: 'FF000000' } };
-    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    currentRow++;
-    
-    // Subtitle
-    worksheet.mergeCells(`A${currentRow}:H${currentRow}`);
-    const subtitleCell = worksheet.getCell(`A${currentRow}`);
-    subtitleCell.value = tanggalRange;
-    subtitleCell.font = { size: 12, bold: true, color: { argb: 'FF000000' } };
-    subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    currentRow++;
-    
-    currentRow++;
-    
-    const dalamGedung = weekData.filter(d => d.kategori === 'dalam_gedung');
-    const luarGedung = weekData.filter(d => d.kategori === 'luar_gedung');
-    
-    // Helper: render section table dengan urutan tetap
-    const renderSection = (sectionTitle: string, items: { kegiatan: string; hari: Record<string, string> }[], urutan: string[]) => {
-      if (items.length === 0) return;
-      
-      // Sort kegiatan sesuai urutan template
-      const sortedItems = sortKegiatanByOrder(items, urutan);
-      
-      // Header baris: section title sebagai kolom pertama
-      const headerRow = worksheet.getRow(currentRow);
-      headerRow.values = [sectionTitle, ...headerHariLabels];
-      headerRow.font = { bold: true, color: { argb: 'FF000000' } };
-      headerRow.fill = GRAY_FILL;
-      headerRow.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-      headerRow.height = 40;
-      
-      // Border header
-      headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-        if (colNumber <= 8) {
-          cell.border = {
-            top: { style: 'thin' },
-            left: { style: 'thin' },
-            bottom: { style: 'thin' },
-            right: { style: 'thin' }
-          };
-          // Minggu = merah background (kolom 2-8)
-          if (colNumber >= 2 && colNumber <= 8) {
-            const isMinggu = headerHariData[colNumber - 2]?.isMinggu;
-            if (isMinggu) {
-              cell.fill = MERAH_FILL;
-              cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-            }
-          }
-        }
+    if (penyertaList.length === 0) {
+      // Jika tidak ada penyerta, tetap buat 1 baris dengan pelaksana kosong
+      flatRows.push({
+        tanggal: item.tanggal,
+        nama_kegiatan: item.kegiatan,
+        pelaksana: '',
+        lokasi: lokasiDisplay, 
+        kelurahan: kelurahan,
+        kategori: kategori,
       });
-      
-      currentRow++;
-      
-      // Data rows
-      sortedItems.forEach((row) => {
-        const dataRow = worksheet.getRow(currentRow);
-        dataRow.values = [row.kegiatan, ...hariList.map(h => row.hari[h] || '')];
-        dataRow.alignment = { vertical: 'top', wrapText: true };
-        dataRow.height = 30;
-        
-        dataRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-          if (colNumber <= 8) {
-            // Cell kosong = abu-abu
-            const isEmpty = !cell.value || cell.value.toString().trim() === '';
-            if (isEmpty) {
-              cell.fill = GRAY_FILL;
-            }
-            
-            cell.border = {
-              top: { style: 'thin' },
-              left: { style: 'thin' },
-              bottom: { style: 'thin' },
-              right: { style: 'thin' }
-            };
-          }
+    } else {
+      // 1 pelaksana per baris
+      penyertaList.forEach((pelaksana) => {
+        flatRows.push({
+          tanggal: item.tanggal,
+          nama_kegiatan: item.kegiatan,
+          pelaksana: pelaksana,
+          lokasi: lokasiDisplay, 
+          kelurahan: kelurahan,
+          kategori: kategori,
         });
-        
-        currentRow++;
       });
-      
-      currentRow += 2;
-    };
-    
-    // Render section Dalam Gedung dengan urutan template
-    if (dalamGedung.length > 0) {
-      const pivoted = pivotByHari(dalamGedung);
-      renderSection('RUANG PELAYANAN', pivoted, URUTAN_DALAM_GEDUNG);
-    }
-    
-    // Render section Luar Gedung dengan urutan template
-    if (luarGedung.length > 0) {
-      const pivoted = pivotByHari(luarGedung);
-      renderSection('KEGIATAN LUAR GEDUNG', pivoted, URUTAN_LUAR_GEDUNG);
     }
   });
+
+  // SORT DATA
+  flatRows.sort((a, b) => {
+    // 1. Sort tanggal (ascending)
+    const dateA = new Date(a.tanggal).getTime();
+    const dateB = new Date(b.tanggal).getTime();
+    if (dateA !== dateB) return dateA - dateB;
+    
+    // 2. Sort kategori (Dalam Gedung dulu, baru Luar Gedung)
+    if (a.kategori !== b.kategori) {
+      return a.kategori === 'DALAM GEDUNG' ? -1 : 1;
+    }
+    
+    // 3. Sort nama kegiatan sesuai urutan template
+    const allUrutan = [...URUTAN_DALAM_GEDUNG, ...URUTAN_LUAR_GEDUNG];
+    const indexA = allUrutan.findIndex(k => 
+      k.toUpperCase() === a.nama_kegiatan.toUpperCase() ||
+      k.toUpperCase().replace(/\s+/g, '') === a.nama_kegiatan.toUpperCase().replace(/\s+/g, '')
+    );
+    const indexB = allUrutan.findIndex(k => 
+      k.toUpperCase() === b.nama_kegiatan.toUpperCase() ||
+      k.toUpperCase().replace(/\s+/g, '') === b.nama_kegiatan.toUpperCase().replace(/\s+/g, '')
+    );
+    const safeIndexA = indexA === -1 ? 9999 : indexA;
+    const safeIndexB = indexB === -1 ? 9999 : indexB;
+    
+    return safeIndexA - safeIndexB;
+  });
   
+  // HEADER
+  const headers = ['NO', 'TANGGAL', 'NAMA KEGIATAN', 'PELAKSANA', 'LOKASI', 'KELURAHAN', 'KELURAHAN'];
+  
+  const headerRow = worksheet.getRow(1);
+  headerRow.values = headers;
+  headerRow.font = { bold: true, size: 11, color: { argb: 'FF000000' } };
+  headerRow.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
+  headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } }; // Abu-abu
+  headerRow.height = 25;
+  
+  // Border header
+  headerRow.eachCell({ includeEmpty: true }, (cell) => {
+    cell.border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' },
+    };
+  });
+
+  // LEBAR KOLOM
+  worksheet.getColumn(1).width = 6;   // NO
+  worksheet.getColumn(2).width = 14;  // TANGGAL
+  worksheet.getColumn(3).width = 85;  // NAMA KEGIATAN
+  worksheet.getColumn(4).width = 45;  // PELAKSANA
+  worksheet.getColumn(5).width = 35;  // LOKASI
+  worksheet.getColumn(6).width = 15;  // KELURAHAN
+  worksheet.getColumn(7).width = 18;  // KATEGORI
+  
+  // DATA ROWS
+  flatRows.forEach((row, idx) => {
+    const dataRow = worksheet.getRow(idx + 2);
+    dataRow.values = [
+      idx + 1,                              // NO
+      formatTanggalExcel(row.tanggal),      // TANGGAL
+      row.nama_kegiatan,                    // NAMA KEGIATAN
+      row.pelaksana,                        // PELAKSANA
+      row.lokasi,                           // LOKASI (sudah di-transform: "Puskesmas" untuk dalam gedung)
+      row.kelurahan,                        // KELURAHAN
+      row.kategori,                         // KATEGORI
+    ];
+    
+    // Alignment per kolom
+    dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: false }; // NO
+    dataRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle', wrapText: false }; // TANGGAL
+    dataRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };   // NAMA KEGIATAN
+    dataRow.getCell(4).alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };   // PELAKSANA
+    dataRow.getCell(5).alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };   // LOKASI
+    dataRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle', wrapText: false }; // KELURAHAN
+    dataRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle', wrapText: false }; // KATEGORI
+    
+    // Font normal (tidak bold)
+    dataRow.font = { size: 11 };
+    
+    // Border tipis
+    dataRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      if (colNumber <= 7) {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' },
+        };
+      }
+    });
+    
+    dataRow.height = 20;
+  });
+  
+  // GENERATE & DOWNLOAD FILE
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = filename;
+  a.download = actualFilename; // Nama file: DATABASE KEGIATAN [BULAN] [TAHUN].xlsx
   a.click();
   URL.revokeObjectURL(url);
 }
