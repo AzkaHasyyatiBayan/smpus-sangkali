@@ -19,8 +19,25 @@ export async function apiGet(
   token?: string
 ): Promise<unknown> {
   const base = buildUrl(path);
-  const query = params ? '?' + new URLSearchParams(params).toString() : '';
-  const res = await fetch(`${base}${query}`, {
+  
+  // ========== PERUBAHAN DI SINI! ==========
+  // Buat URLSearchParams tapi PAKSA format tanggal tetap YYYY-MM-DD
+  let query = '';
+  if (params) {
+    const urlParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      // ✅ KALAU KEY NYA "tanggal", kirim apa adanya (sudah YYYY-MM-DD)
+      // ✅ KALAU KEY LAIN, kirim biasa
+      urlParams.append(key, value);
+    }
+    query = '?' + urlParams.toString();
+  }
+  // ========================================
+  
+  const url = `${base}${query}`;
+  console.log('📡 API Request URL:', url); // Untuk debug
+  
+  const res = await fetch(url, {
     headers: token ? { 'Authorization': `Token ${token}` } : {},
   });
   if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`);
