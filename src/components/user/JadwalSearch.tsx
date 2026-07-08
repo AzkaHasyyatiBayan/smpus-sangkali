@@ -8,19 +8,31 @@ import { formatTanggal } from '@/lib/utils';
 import { Kegiatan } from '@/types';
 import { Search, Calendar, Inbox, Loader2 } from 'lucide-react';
 
-// ========== FUNGSI FORMAT TANGGAL (DIUBAH) ==========
-// Kirim dalam format YYYY-MM-DD (ISO)
+// ============================================
+// FUNGSI FORMAT TANGGAL UNTUK API
+// Karena server baca MM/DD/YYYY, kita kirim DD/MM/YYYY
+// biar server bacanya sesuai keinginan kita
+// ============================================
 const formatTanggalKeAPI = (tanggalISO: string): string => {
-  return tanggalISO; // "2026-03-02"
+  if (!tanggalISO) return '';
+  const parts = tanggalISO.split('-'); // ["2026", "03", "02"]
+  const tahun = parts[0];
+  const bulan = parts[1];  // "03"
+  const hari = parts[2];   // "02"
+  
+  // Kirim DD/MM/YYYY (tukar posisi hari & bulan)
+  // Server baca sebagai MM/DD/YYYY
+  // Hasilnya: tanggal yang kita maksud jadi terbaca benar
+  return `${hari}/${bulan}/${tahun}`; // "02/03/2026"
 };
-// ========== SAMPAI SINI ==========
+// ============================================
 
 // Menghapus spasi di sekitar koma dan menormalisasi spasi ganda
 const normalizeName = (name: string): string => {
   return name
     .toLowerCase()
-    .replace(/\s*,\s*/g, ',')
-    .replace(/\s+/g, ' ')
+    .replace(/\s*,\s*/g, ',')   // Hapus spasi di sekitar koma: "A, B" → "A,B"
+    .replace(/\s+/g, ' ')        // Normalisasi multiple spaces jadi satu
     .trim();
 };
 
@@ -42,19 +54,25 @@ export default function JadwalSearch() {
     setLoading(true);
     setError(null);
     try {
-      // Format tanggal ke ISO (YYYY-MM-DD)
+      // ===== INI PERUBAHANNYA =====
+      // Ubah format tanggal sebelum dikirim ke API
       const tanggalBaru = formatTanggalKeAPI(tanggal);
       
+      console.log('📅 Tanggal asli (dari input):', tanggal);
       console.log('📅 Tanggal dikirim ke API:', tanggalBaru);
+      // =============================
       
       const data = await apiGet('search-user/', { 
         penyerta: nama, 
-        tanggal: tanggalBaru
+        tanggal: tanggalBaru  // ← pake yang sudah diformat
       }) as Kegiatan[];
       
+      // Filter client-side berdasarkan nama yang dinormalisasi
       const filtered = (data || []).filter(item => matchesName(item.penyerta, nama));
       
       console.log('[JadwalSearch] Response:', data?.length, 'Filtered:', filtered.length);
+      console.log('[JadwalSearch] Sample data:', data?.[0]);
+      console.log('[JadwalSearch] Nama dicari:', nama, '→ normalized:', normalizeName(nama));
       
       setHasil(filtered);
     } catch (err) {
