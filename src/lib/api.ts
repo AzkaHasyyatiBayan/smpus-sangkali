@@ -25,21 +25,36 @@ export async function apiGet(
     for (const [key, value] of Object.entries(params)) {
       if (key === 'tanggal' && value) {
         // =====================================================
-        // 🔥 HACK: Balikin tanggal karena server pake MM/DD/YYYY
-        // Input atasan: DD/MM/YYYY (contoh: 03/02/2026 = 3 Feb)
-        // Kita balik jadi MM/DD/YYYY (02/03/2026)
-        // Server baca 02/03/2026 = 2 Maret? SALAH!
-        // TAPI karena kita balik, server malah baca 3 Feb! BENAR!
+        // 🔥 FORMAT INPUT BISA:
+        //    - "03/02/2026" (DD/MM/YYYY)
+        //    - "2026-02-03" (YYYY-MM-DD) ← dari input date
+        // Kita deteksi dan balik biar server baca MM/DD/YYYY
         // =====================================================
-        const parts = value.split('/'); // ["03", "02", "2026"]
-        const hari = parts[0];
-        const bulan = parts[1];
-        const tahun = parts[2];
-        const tanggalDibalik = `${bulan}/${hari}/${tahun}`; // "02/03/2026"
+        let tanggalDibalik = '';
         
-        console.log('📅 Input atasan:', value);
-        console.log('📅 Dibalik jadi:', tanggalDibalik);
-        console.log('📅 Server baca sebagai MM/DD/YYYY');
+        if (value.includes('/')) {
+          // Format: DD/MM/YYYY → balik jadi MM/DD/YYYY
+          const parts = value.split('/');
+          if (parts.length === 3) {
+            const hari = parts[0];
+            const bulan = parts[1];
+            const tahun = parts[2];
+            tanggalDibalik = `${bulan}/${hari}/${tahun}`;
+          }
+        } else if (value.includes('-')) {
+          // Format: YYYY-MM-DD → ubah jadi MM/DD/YYYY
+          const parts = value.split('-');
+          if (parts.length === 3) {
+            const tahun = parts[0];
+            const bulan = parts[1];
+            const hari = parts[2];
+            // Server baca MM/DD/YYYY, jadi kita kirim dalam format itu
+            tanggalDibalik = `${bulan}/${hari}/${tahun}`;
+          }
+        }
+        
+        console.log('📅 Tanggal asli:', value);
+        console.log('📅 Dibalik jadi (MM/DD/YYYY):', tanggalDibalik);
         
         urlParams.append(key, tanggalDibalik);
       } else {
