@@ -1,7 +1,6 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://web-production-dc35a.up.railway.app/api';
 
 function buildUrl(path: string): string {
-  // Hapus trailing slash dari base, tambahkan leading slash ke path
   const base = API_BASE.replace(/\/+$/, '');
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${base}${cleanPath}`;
@@ -20,22 +19,38 @@ export async function apiGet(
 ): Promise<unknown> {
   const base = buildUrl(path);
   
-  // ========== PERUBAHAN DI SINI! ==========
-  // Buat URLSearchParams tapi PAKSA format tanggal tetap YYYY-MM-DD
   let query = '';
   if (params) {
     const urlParams = new URLSearchParams();
     for (const [key, value] of Object.entries(params)) {
-      // ✅ KALAU KEY NYA "tanggal", kirim apa adanya (sudah YYYY-MM-DD)
-      // ✅ KALAU KEY LAIN, kirim biasa
-      urlParams.append(key, value);
+      if (key === 'tanggal' && value) {
+        // =====================================================
+        // 🔥 HACK: Balikin tanggal karena server pake MM/DD/YYYY
+        // Input atasan: DD/MM/YYYY (contoh: 03/02/2026 = 3 Feb)
+        // Kita balik jadi MM/DD/YYYY (02/03/2026)
+        // Server baca 02/03/2026 = 2 Maret? SALAH!
+        // TAPI karena kita balik, server malah baca 3 Feb! BENAR!
+        // =====================================================
+        const parts = value.split('/'); // ["03", "02", "2026"]
+        const hari = parts[0];
+        const bulan = parts[1];
+        const tahun = parts[2];
+        const tanggalDibalik = `${bulan}/${hari}/${tahun}`; // "02/03/2026"
+        
+        console.log('📅 Input atasan:', value);
+        console.log('📅 Dibalik jadi:', tanggalDibalik);
+        console.log('📅 Server baca sebagai MM/DD/YYYY');
+        
+        urlParams.append(key, tanggalDibalik);
+      } else {
+        urlParams.append(key, value);
+      }
     }
     query = '?' + urlParams.toString();
   }
-  // ========================================
   
   const url = `${base}${query}`;
-  console.log('📡 API Request URL:', url); // Untuk debug
+  console.log('📡 URL:', url);
   
   const res = await fetch(url, {
     headers: token ? { 'Authorization': `Token ${token}` } : {},
