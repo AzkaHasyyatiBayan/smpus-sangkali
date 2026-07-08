@@ -8,12 +8,25 @@ import { formatTanggal } from '@/lib/utils';
 import { Kegiatan } from '@/types';
 import { Search, Calendar, Inbox, Loader2 } from 'lucide-react';
 
+// ========== TAMBAHKAN INI (FUNGSI BARU) ==========
+// FUNGSI UNTUK MENGUBAH FORMAT TANGGAL
+// Contoh: "2026-03-02" → "03/02/2026" (MM/DD/YYYY)
+const formatTanggalKeAPI = (tanggalISO: string): string => {
+  if (!tanggalISO) return '';
+  const parts = tanggalISO.split('-');
+  const tahun = parts[0];
+  const bulan = parts[1];
+  const hari = parts[2];
+  return `${bulan}/${hari}/${tahun}`;
+};
+// ========== SAMPAI SINI ==========
+
 // Menghapus spasi di sekitar koma dan menormalisasi spasi ganda
 const normalizeName = (name: string): string => {
   return name
     .toLowerCase()
-    .replace(/\s*,\s*/g, ',')   // Hapus spasi di sekitar koma: "A, B" → "A,B"
-    .replace(/\s+/g, ' ')        // Normalisasi multiple spaces jadi satu
+    .replace(/\s*,\s*/g, ',')
+    .replace(/\s+/g, ' ')
     .trim();
 };
 
@@ -35,7 +48,15 @@ export default function JadwalSearch() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiGet('search-user/', { penyerta: nama, tanggal }) as Kegiatan[];
+      // ========== INI PERUBAHANNYA ==========
+      // Ubah format tanggal sebelum dikirim ke API
+      const tanggalBaru = formatTanggalKeAPI(tanggal);
+      
+      const data = await apiGet('search-user/', { 
+        penyerta: nama, 
+        tanggal: tanggalBaru  // ← pake yang ini
+      }) as Kegiatan[];
+      // ========== SAMPAI SINI ==========
       
       // Filter client-side berdasarkan nama yang dinormalisasi
       const filtered = (data || []).filter(item => matchesName(item.penyerta, nama));
