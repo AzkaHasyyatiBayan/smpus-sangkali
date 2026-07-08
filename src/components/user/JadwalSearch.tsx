@@ -10,11 +10,14 @@ import { Search, Calendar, Inbox, Loader2 } from 'lucide-react';
 
 // ============================================
 // FUNGSI FORMAT TANGGAL UNTUK API
-// API menerima format ISO: YYYY-MM-DD
 // ============================================
 const formatTanggalKeAPI = (tanggalISO: string): string => {
-  // Kirim dalam format ISO (YYYY-MM-DD)
-  return tanggalISO; // "2026-03-02"
+  if (!tanggalISO) return '';
+  const parts = tanggalISO.split('-');
+  const tahun = parts[0];
+  const bulan = parts[1];
+  const hari = parts[2];
+  return `${hari}/${bulan}/${tahun}`; // DD/MM/YYYY
 };
 // ============================================
 
@@ -22,8 +25,8 @@ const formatTanggalKeAPI = (tanggalISO: string): string => {
 const normalizeName = (name: string): string => {
   return name
     .toLowerCase()
-    .replace(/\s*,\s*/g, ',')   // Hapus spasi di sekitar koma: "A, B" → "A,B"
-    .replace(/\s+/g, ' ')        // Normalisasi multiple spaces jadi satu
+    .replace(/\s*,\s*/g, ',')
+    .replace(/\s+/g, ' ')
     .trim();
 };
 
@@ -45,25 +48,25 @@ export default function JadwalSearch() {
     setLoading(true);
     setError(null);
     try {
-      // ===== INI PERUBAHANNYA =====
-      // Kirim dalam format ISO (YYYY-MM-DD)
+      // ===== KIRIM DALAM FORMAT DD/MM/YYYY =====
       const tanggalBaru = formatTanggalKeAPI(tanggal);
       
       console.log('📅 Tanggal asli (dari input):', tanggal);
-      console.log('📅 Tanggal dikirim ke API:', tanggalBaru);
-      // =============================
+      console.log('📅 Tanggal dikirim ke API (DD/MM/YYYY):', tanggalBaru);
       
-      const data = await apiGet('search-user/', { 
+      // ===== PAKAI ENDPOINT YANG SUDAH BENER =====
+      // ENDPOINT: /api/jadwal-search  (bukan /search-user/)
+      const data = await apiGet('jadwal-search/', { 
         penyerta: nama, 
-        tanggal: tanggalBaru  // ← pake yang sudah diformat
+        tanggal: tanggalBaru
       }) as Kegiatan[];
+      
+      // =========================================
       
       // Filter client-side berdasarkan nama yang dinormalisasi
       const filtered = (data || []).filter(item => matchesName(item.penyerta, nama));
       
       console.log('[JadwalSearch] Response:', data?.length, 'Filtered:', filtered.length);
-      console.log('[JadwalSearch] Sample data:', data?.[0]);
-      console.log('[JadwalSearch] Nama dicari:', nama, '→ normalized:', normalizeName(nama));
       
       setHasil(filtered);
     } catch (err) {
