@@ -23,43 +23,11 @@ export async function apiGet(
   if (params) {
     const urlParams = new URLSearchParams();
     for (const [key, value] of Object.entries(params)) {
-      if (key === 'tanggal' && value) {
-        // =====================================================
-        // 🔥 FORMAT INPUT BISA:
-        //    - "03/02/2026" (DD/MM/YYYY)
-        //    - "2026-02-03" (YYYY-MM-DD) ← dari input date
-        // Kita deteksi dan balik biar server baca MM/DD/YYYY
-        // =====================================================
-        let tanggalDibalik = '';
-        
-        if (value.includes('/')) {
-          // Format: DD/MM/YYYY → balik jadi MM/DD/YYYY
-          const parts = value.split('/');
-          if (parts.length === 3) {
-            const hari = parts[0];
-            const bulan = parts[1];
-            const tahun = parts[2];
-            tanggalDibalik = `${bulan}/${hari}/${tahun}`;
-          }
-        } else if (value.includes('-')) {
-          // Format: YYYY-MM-DD → ubah jadi MM/DD/YYYY
-          const parts = value.split('-');
-          if (parts.length === 3) {
-            const tahun = parts[0];
-            const bulan = parts[1];
-            const hari = parts[2];
-            // Server baca MM/DD/YYYY, jadi kita kirim dalam format itu
-            tanggalDibalik = `${bulan}/${hari}/${tahun}`;
-          }
-        }
-        
-        console.log('📅 Tanggal asli:', value);
-        console.log('📅 Dibalik jadi (MM/DD/YYYY):', tanggalDibalik);
-        
-        urlParams.append(key, tanggalDibalik);
-      } else {
-        urlParams.append(key, value);
-      }
+      // =============================================
+      // 🔥 KIRIM APA ADANYA, JANGAN DIUBAH!
+      // =============================================
+      urlParams.append(key, value);
+      console.log(`📤 ${key}:`, value);
     }
     query = '?' + urlParams.toString();
   }
