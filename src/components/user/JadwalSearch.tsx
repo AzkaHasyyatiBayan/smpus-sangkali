@@ -10,20 +10,11 @@ import { Search, Calendar, Inbox, Loader2 } from 'lucide-react';
 
 // ============================================
 // FUNGSI FORMAT TANGGAL UNTUK API
-// Karena server baca MM/DD/YYYY, kita kirim DD/MM/YYYY
-// biar server bacanya sesuai keinginan kita
+// API menerima format ISO: YYYY-MM-DD
 // ============================================
 const formatTanggalKeAPI = (tanggalISO: string): string => {
-  if (!tanggalISO) return '';
-  const parts = tanggalISO.split('-'); // ["2026", "03", "02"]
-  const tahun = parts[0];
-  const bulan = parts[1];  // "03"
-  const hari = parts[2];   // "02"
-  
-  // Kirim DD/MM/YYYY (tukar posisi hari & bulan)
-  // Server baca sebagai MM/DD/YYYY
-  // Hasilnya: tanggal yang kita maksud jadi terbaca benar
-  return `${hari}/${bulan}/${tahun}`; // "02/03/2026"
+  // Kirim dalam format ISO (YYYY-MM-DD)
+  return tanggalISO; // "2026-03-02"
 };
 // ============================================
 
@@ -55,7 +46,7 @@ export default function JadwalSearch() {
     setError(null);
     try {
       // ===== INI PERUBAHANNYA =====
-      // Ubah format tanggal sebelum dikirim ke API
+      // Kirim dalam format ISO (YYYY-MM-DD)
       const tanggalBaru = formatTanggalKeAPI(tanggal);
       
       console.log('📅 Tanggal asli (dari input):', tanggal);
