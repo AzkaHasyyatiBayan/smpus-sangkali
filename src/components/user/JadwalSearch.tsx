@@ -8,16 +8,10 @@ import { formatTanggal } from '@/lib/utils';
 import { Kegiatan } from '@/types';
 import { Search, Calendar, Inbox, Loader2 } from 'lucide-react';
 
-// ========== TAMBAHKAN INI (FUNGSI BARU) ==========
-// FUNGSI UNTUK MENGUBAH FORMAT TANGGAL
-// Contoh: "2026-03-02" → "03/02/2026" (MM/DD/YYYY)
+// ========== FUNGSI FORMAT TANGGAL (DIUBAH) ==========
+// Kirim dalam format YYYY-MM-DD (ISO)
 const formatTanggalKeAPI = (tanggalISO: string): string => {
-  if (!tanggalISO) return '';
-  const parts = tanggalISO.split('-');
-  const tahun = parts[0];
-  const bulan = parts[1];
-  const hari = parts[2];
-  return `${bulan}/${hari}/${tahun}`;
+  return tanggalISO; // "2026-03-02"
 };
 // ========== SAMPAI SINI ==========
 
@@ -48,22 +42,19 @@ export default function JadwalSearch() {
     setLoading(true);
     setError(null);
     try {
-      // ========== INI PERUBAHANNYA ==========
-      // Ubah format tanggal sebelum dikirim ke API
+      // Format tanggal ke ISO (YYYY-MM-DD)
       const tanggalBaru = formatTanggalKeAPI(tanggal);
+      
+      console.log('📅 Tanggal dikirim ke API:', tanggalBaru);
       
       const data = await apiGet('search-user/', { 
         penyerta: nama, 
-        tanggal: tanggalBaru  // ← pake yang ini
+        tanggal: tanggalBaru
       }) as Kegiatan[];
-      // ========== SAMPAI SINI ==========
       
-      // Filter client-side berdasarkan nama yang dinormalisasi
       const filtered = (data || []).filter(item => matchesName(item.penyerta, nama));
       
       console.log('[JadwalSearch] Response:', data?.length, 'Filtered:', filtered.length);
-      console.log('[JadwalSearch] Sample data:', data?.[0]);
-      console.log('[JadwalSearch] Nama dicari:', nama, '→ normalized:', normalizeName(nama));
       
       setHasil(filtered);
     } catch (err) {
