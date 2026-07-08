@@ -9,7 +9,7 @@ import { Kegiatan } from '@/types';
 import { Search, Calendar, Inbox, Loader2 } from 'lucide-react';
 
 // ============================================
-// FUNGSI FORMAT TANGGAL UNTUK API
+// FUNGSI FORMAT TANGGAL KE DD/MM/YYYY
 // ============================================
 const formatTanggalKeAPI = (tanggalISO: string): string => {
   if (!tanggalISO) return '';
@@ -25,8 +25,8 @@ const formatTanggalKeAPI = (tanggalISO: string): string => {
 const normalizeName = (name: string): string => {
   return name
     .toLowerCase()
-    .replace(/\s*,\s*/g, ',')
-    .replace(/\s+/g, ' ')
+    .replace(/\s*,\s*/g, ',')   // Hapus spasi di sekitar koma: "A, B" → "A,B"
+    .replace(/\s+/g, ' ')        // Normalisasi multiple spaces jadi satu
     .trim();
 };
 
@@ -48,25 +48,26 @@ export default function JadwalSearch() {
     setLoading(true);
     setError(null);
     try {
-      // ===== KIRIM DALAM FORMAT DD/MM/YYYY =====
+      // Format ke DD/MM/YYYY (sesuai permintaan atasan)
       const tanggalBaru = formatTanggalKeAPI(tanggal);
       
       console.log('📅 Tanggal asli (dari input):', tanggal);
       console.log('📅 Tanggal dikirim ke API (DD/MM/YYYY):', tanggalBaru);
       
-      // ===== PAKAI ENDPOINT YANG SUDAH BENER =====
-      // ENDPOINT: /api/jadwal-search  (bukan /search-user/)
+      // ===== PAKAI ENDPOINT PROXY JADWAL-SEARCH =====
+      // Proxy ini akan mengubah DD/MM/YYYY → YYYY-MM-DD sebelum kirim ke Railway
       const data = await apiGet('jadwal-search/', { 
         penyerta: nama, 
         tanggal: tanggalBaru
       }) as Kegiatan[];
-      
-      // =========================================
+      // ==============================================
       
       // Filter client-side berdasarkan nama yang dinormalisasi
       const filtered = (data || []).filter(item => matchesName(item.penyerta, nama));
       
       console.log('[JadwalSearch] Response:', data?.length, 'Filtered:', filtered.length);
+      console.log('[JadwalSearch] Sample data:', data?.[0]);
+      console.log('[JadwalSearch] Nama dicari:', nama, '→ normalized:', normalizeName(nama));
       
       setHasil(filtered);
     } catch (err) {
