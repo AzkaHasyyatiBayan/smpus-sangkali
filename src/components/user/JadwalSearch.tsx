@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { apiGet } from '@/lib/api';
 import { DAFTAR_NAMA } from '@/lib/constans';
@@ -9,24 +11,23 @@ import { Kegiatan } from '@/types';
 import { Search, Calendar, Inbox, Loader2 } from 'lucide-react';
 
 // ============================================
-// FUNGSI FORMAT TANGGAL KE DD/MM/YYYY
+// FORMAT TANGGAL KE DD/MM/YYYY (untuk API)
 // ============================================
 const formatTanggalKeAPI = (tanggalISO: string): string => {
   if (!tanggalISO) return '';
-  const parts = tanggalISO.split('-');
-  const tahun = parts[0];
-  const bulan = parts[1];
-  const hari = parts[2];
+  const date = new Date(tanggalISO);
+  const hari = String(date.getDate()).padStart(2, '0');
+  const bulan = String(date.getMonth() + 1).padStart(2, '0');
+  const tahun = date.getFullYear();
   return `${hari}/${bulan}/${tahun}`; // DD/MM/YYYY
 };
 // ============================================
 
-// Menghapus spasi di sekitar koma dan menormalisasi spasi ganda
 const normalizeName = (name: string): string => {
   return name
     .toLowerCase()
-    .replace(/\s*,\s*/g, ',')   // Hapus spasi di sekitar koma: "A, B" → "A,B"
-    .replace(/\s+/g, ' ')        // Normalisasi multiple spaces jadi satu
+    .replace(/\s*,\s*/g, ',')
+    .replace(/\s+/g, ' ')
     .trim();
 };
 
@@ -39,7 +40,7 @@ const matchesName = (penyerta: string, nama: string): boolean => {
 
 export default function JadwalSearch() {
   const [nama, setNama] = useState(DAFTAR_NAMA[0]);
-  const [tanggal, setTanggal] = useState(new Date().toISOString().slice(0,10));
+  const [tanggal, setTanggal] = useState(new Date().toISOString().slice(0, 10));
   const [hasil, setHasil] = useState<Kegiatan[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,31 +49,24 @@ export default function JadwalSearch() {
     setLoading(true);
     setError(null);
     try {
-      // Format ke DD/MM/YYYY (sesuai permintaan atasan)
       const tanggalBaru = formatTanggalKeAPI(tanggal);
       
-      console.log('📅 Tanggal asli (dari input):', tanggal);
+      console.log('📅 Tanggal input:', tanggal);
       console.log('📅 Tanggal dikirim ke API (DD/MM/YYYY):', tanggalBaru);
-      
-      // ===== PAKAI ENDPOINT PROXY JADWAL-SEARCH =====
-      // Proxy ini akan mengubah DD/MM/YYYY → YYYY-MM-DD sebelum kirim ke Railway
+
+      // Panggil endpoint search
       const data = await apiGet('jadwal-search/', { 
         penyerta: nama, 
-        tanggal: tanggalBaru
+        tanggal: tanggalBaru 
       }) as Kegiatan[];
-      // ==============================================
-      
-      // Filter client-side berdasarkan nama yang dinormalisasi
-      const filtered = (data || []).filter(item => matchesName(item.penyerta, nama));
-      
-      console.log('[JadwalSearch] Response:', data?.length, 'Filtered:', filtered.length);
-      console.log('[JadwalSearch] Sample data:', data?.[0]);
-      console.log('[JadwalSearch] Nama dicari:', nama, '→ normalized:', normalizeName(nama));
-      
+
+      // Filter client-side
+      const filtered = (data || []).filter(item => matchesName(item.penyerta || '', nama));
+
       setHasil(filtered);
     } catch (err) {
-      console.error('[JadwalSearch] Gagal mengambil data jadwal:', err);
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan');
+      console.error('[JadwalSearch] Gagal mengambil data:', err);
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan saat mencari jadwal');
       setHasil([]);
     } finally {
       setLoading(false);
@@ -90,8 +84,14 @@ export default function JadwalSearch() {
       
       <div className="flex gap-4 mb-5 flex-wrap items-end">
         <div className="flex-1 min-w-[180px]">
-          <Select label="Nama" value={nama} onChange={e => setNama(e.target.value)} options={DAFTAR_NAMA} />
+          <Select 
+            label="Nama" 
+            value={nama} 
+            onChange={e => setNama(e.target.value)} 
+            options={DAFTAR_NAMA} 
+          />
         </div>
+        
         <div className="min-w-[180px]">
           <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
             <Calendar size={14} className="text-puskesmas-500" /> Tanggal
@@ -103,10 +103,11 @@ export default function JadwalSearch() {
             className="mt-0 block w-full rounded-xl border border-gray-200 shadow-sm px-3 py-2.5 focus:ring-2 focus:ring-puskesmas-500/30 focus:border-puskesmas-500 transition-all duration-200"
           />
         </div>
+
         <Button 
           onClick={handleSearch} 
           disabled={loading}
-          className="rounded-xl px-6 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          className="rounded-xl px-6 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <><Loader2 size={16} className="inline mr-1.5 animate-spin" /> Mencari...</>
@@ -125,7 +126,11 @@ export default function JadwalSearch() {
       {hasil && !loading && (
         <div className="animate-fade-in">
           {hasil.length > 0 ? (
-            <Receipt title="Jadwal Kegiatan" subtitle={formatTanggal(tanggal)} items={hasil} />
+            <Receipt 
+              title="Jadwal Kegiatan" 
+              subtitle={formatTanggal(tanggal)} 
+              items={hasil} 
+            />
           ) : (
             <div className="text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
               <Inbox size={40} className="mx-auto mb-3 text-gray-300" />
