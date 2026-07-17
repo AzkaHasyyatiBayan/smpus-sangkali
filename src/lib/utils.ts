@@ -634,3 +634,66 @@ export function generatePDF(data: Kegiatan[], title = 'JADWAL PELAYANAN PUSKESMA
   
   doc.save('jadwal.pdf');
 }
+
+export function capitalisasiJudul(teks: string): string {
+  const kataKecil = new Set([
+    'di', 'ke', 'dari', 'pada', 'yang', 'dan', 'atau', 'untuk',
+    'dengan', 'dalam', 'itu', 'ini', 'tersebut'
+  ]);
+  const kataKapitalKhusus = new Set([
+    'puskesmas', 'posyandu', 'lansia', 'imunisasi', 'penyuluhan',
+    'balai', 'desa', 'sd', 'sdn', 'smp', 'sma', 'tk'
+  ]);
+
+  return teks.split(' ').map((kata, i) => {
+    const lower = kata.toLowerCase();
+    if (i === 0) {
+      // Kata pertama selalu kapital
+      if (kataKapitalKhusus.has(lower)) {
+        return ['sd', 'sdn', 'smp', 'sma', 'tk'].includes(lower)
+          ? kata.toUpperCase()
+          : kata.charAt(0).toUpperCase() + kata.slice(1);
+      }
+      return kata.charAt(0).toUpperCase() + kata.slice(1);
+    }
+    if (kataKecil.has(lower)) return lower;
+    if (kataKapitalKhusus.has(lower)) {
+      return ['sd', 'sdn', 'smp', 'sma', 'tk'].includes(lower)
+        ? kata.toUpperCase()
+        : kata.charAt(0).toUpperCase() + kata.slice(1);
+    }
+    return kata.charAt(0).toUpperCase() + kata.slice(1);
+  }).join(' ');
+}
+
+/**
+ * Memisahkan string yang berisi banyak nama (dipisah koma, titik koma, newline)
+ * menjadi array nama. Sesuai views.py `split_names`.
+ */
+export function splitNames(text: string): string[] {
+  if (!text || text.trim().toLowerCase() === 'nan' || text.trim().toLowerCase() === 'none') {
+    return [];
+  }
+  
+  const t = text.trim();
+  
+  // Jika ada pemisah titik koma
+  if (t.includes(';')) {
+    return t.split(';').map(s => s.trim()).filter(Boolean);
+  }
+  
+  // Jika ada newline
+  if (t.includes('\n')) {
+    return t.split('\n').map(s => s.trim()).filter(Boolean);
+  }
+  
+  // Regex untuk memisahkan nama dengan gelar (seperti Python)
+  // Pola: Nama depan, Nama belakang (opsional), gelar (opsional)
+  const pattern = /((?:dr\.?|drg\.?)?\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s*,\s*)?(?:S\.Tr\.Keb|S\.Kep\.?\s*,?\s*Ners|AMK|SKM|A\.Md\.Keb|A\.Md\.KL|S\.Gz|A\.Md\.Gz|S\.Farm\.?\s*,?\s*Apt|S\.E|S\.T|AMd\.?\s*RMIK|S\.ST|S\.Tr\.Kes|A\.Md\.AK|A\.Md\.Farm|A\.Md\.Kep|Amd\.?\s*Kep|Am\.?\s*Keb|dr\.?|drg\.?)?)/g;
+  const matches = t.match(pattern);
+  if (matches && matches.length > 1) {
+    return matches.map(m => m.trim()).filter(Boolean);
+  }
+  
+  return t ? [t] : [];
+}

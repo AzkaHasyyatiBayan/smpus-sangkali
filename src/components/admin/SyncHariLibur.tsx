@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { apiPost } from '@/lib/api';
+import { apiPost } from '../../lib/api';
 import Button from '@/components/ui/Button';
 import toast from 'react-hot-toast';
 import { CalendarSync, RefreshCw } from 'lucide-react';

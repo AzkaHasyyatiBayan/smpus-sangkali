@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { apiGet, apiPost, apiPut } from '@/lib/api';
+import { apiGet, apiPost, apiPut } from '../../lib/api';
 import { generateExcel, generatePDF } from '@/lib/utils';
 import Button from '@/components/ui/Button';
 import DataTable from '@/components/ui/DataTable';

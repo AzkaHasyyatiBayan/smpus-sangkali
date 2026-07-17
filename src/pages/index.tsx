@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiGet } from '@/lib/api';
+import { apiGet } from '../lib/api';
 import Header from '@/components/layout/Header';
 import JadwalSearch from '@/components/user/JadwalSearch';
 import RiwayatKehadiran from '@/components/user/RiwayatKehadiran';

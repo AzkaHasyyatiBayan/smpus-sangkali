@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiGet } from '@/lib/api';
+import { apiGet } from '../../lib/api';
 import { Kegiatan } from '@/types';
 import { CalendarDays, Inbox, Loader2 } from 'lucide-react';
 

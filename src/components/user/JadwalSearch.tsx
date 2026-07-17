@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { apiGet } from '@/lib/api';
+import { apiGet } from '../../lib/api';
 import { DAFTAR_NAMA } from '@/lib/constans';
 import Receipt from '@/components/ui/Receipt';
 import Select from '@/components/ui/Select';
@@ -9,19 +9,6 @@ import Button from '@/components/ui/Button';
 import { formatTanggal } from '@/lib/utils';
 import { Kegiatan } from '@/types';
 import { Search, Calendar, Inbox, Loader2 } from 'lucide-react';
-
-// ============================================
-// FORMAT TANGGAL KE DD/MM/YYYY (untuk API)
-// ============================================
-const formatTanggalKeAPI = (tanggalISO: string): string => {
-  if (!tanggalISO) return '';
-  const date = new Date(tanggalISO);
-  const hari = String(date.getDate()).padStart(2, '0');
-  const bulan = String(date.getMonth() + 1).padStart(2, '0');
-  const tahun = date.getFullYear();
-  return `${hari}/${bulan}/${tahun}`; // DD/MM/YYYY
-};
-// ============================================
 
 const normalizeName = (name: string): string => {
   return name
@@ -49,20 +36,14 @@ export default function JadwalSearch() {
     setLoading(true);
     setError(null);
     try {
-      const tanggalBaru = formatTanggalKeAPI(tanggal);
-      
-      console.log('📅 Tanggal input:', tanggal);
-      console.log('📅 Tanggal dikirim ke API (DD/MM/YYYY):', tanggalBaru);
+      console.log('📅 Tanggal dikirim ke API (YYYY-MM-DD):', tanggal);
 
-      // Panggil endpoint search
-      const data = await apiGet('jadwal-search/', { 
+      const data = await apiGet('search-user/', { 
         penyerta: nama, 
-        tanggal: tanggalBaru 
+        tanggal: tanggal 
       }) as Kegiatan[];
 
-      // Filter client-side
       const filtered = (data || []).filter(item => matchesName(item.penyerta || '', nama));
-
       setHasil(filtered);
     } catch (err) {
       console.error('[JadwalSearch] Gagal mengambil data:', err);

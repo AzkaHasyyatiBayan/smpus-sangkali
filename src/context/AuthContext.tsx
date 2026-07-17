@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { apiPost } from '@/lib/api';
+import { apiGet, apiPost } from '../lib/api';
 
 interface AuthState {
   loggedIn: boolean;
@@ -38,21 +38,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // PERBAIKAN: tidak lagi hardcode Railway URL, pakai apiGet lokal
   async function verifyAndSet(token: string) {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/verify-token/`, {
-        headers: { 'Authorization': `Token ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setState({ loggedIn: true, token, username: data.username });
-        localStorage.setItem('token', token);
-        window.history.replaceState({}, '', window.location.pathname);
-      } else {
-        localStorage.removeItem('token');
-      }
+      const data = await apiGet('verify-token/', {}, token);
+      setState({ loggedIn: true, token, username: data.username });
+      localStorage.setItem('token', token);
+      window.history.replaceState({}, '', window.location.pathname);
     } catch {
-      // offline
+      localStorage.removeItem('token');
     }
   }
 
@@ -67,8 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return false;
   }
 
+  // PERBAIKAN: tidak lagi hit /api/logout/ yang sudah tidak ada
   function logout() {
-    if (state.token) apiPost('logout/', {}, state.token).catch(() => {});
     setState({ loggedIn: false, token: null, username: '' });
     localStorage.removeItem('token');
   }

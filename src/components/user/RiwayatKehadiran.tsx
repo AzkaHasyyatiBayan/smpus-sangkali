@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiGet } from '@/lib/api';
+import { apiGet } from '../../lib/api';
 import { DAFTAR_NAMA } from '@/lib/constans';
 import { bulanOptions, formatTanggal } from '@/lib/utils';
 import Button from '@/components/ui/Button';
@@ -10,8 +10,8 @@ import { History, MapPin, Calendar, CheckCircle2, XCircle, Circle, Inbox, Loader
 const normalizeName = (name: string): string => {
   return name
     .toLowerCase()
-    .replace(/\s*,\s*/g, ',')   // Hapus spasi di sekitar koma: "A, B" → "A,B"
-    .replace(/\s+/g, ' ')        // Normalisasi multiple spaces jadi satu
+    .replace(/\s*,\s*/g, ',')
+    .replace(/\s+/g, ' ')
     .trim();
 };
 
@@ -38,22 +38,24 @@ export default function RiwayatKehadiran() {
     try {
       const res = await apiGet('search-user/', { penyerta: nama }) as Kegiatan[];
       
-      console.log('[RiwayatKehadiran] Response:', res?.length);
-      console.log('[RiwayatKehadiran] Nama dicari:', nama, '→ normalized:', normalizeName(nama));
-      console.log('[RiwayatKehadiran] Sample penyerta:', res?.[0]?.penyerta, '→ normalized:', res?.[0]?.penyerta?.split(';').map(n => normalizeName(n)));
-      
-      let filtered: Kegiatan[] = (res || []).filter(item => matchesName(item.penyerta, nama));
-      
-      console.log('[RiwayatKehadiran] After name filter:', filtered.length);
+      let filtered: Kegiatan[] = (res || []).filter(item => matchesName(item.penyerta || '', nama));
       
       if (bulan !== 'Semua') {
-        const monthIdx = bulanOptions.indexOf(bulan);
-        filtered = filtered.filter(item => new Date(item.tanggal).getMonth() === monthIdx);
+        const monthIdx = bulanOptions.indexOf(bulan); // 0 = Januari, 11 = Desember
+        const targetMonth = String(monthIdx + 1).padStart(2, '0'); // Ubah jadi '01', '02', ..., '12'
+        
+        filtered = filtered.filter(item => {
+          // item.tanggal format: "YYYY-MM-DD". Index 1 adalah bagian bulan ("MM")
+          return item.tanggal.split('-')[1] === targetMonth;
+        });
       }
-      filtered = filtered.filter(item => new Date(item.tanggal).getFullYear() === tahun);
-      filtered.sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime());
       
-      console.log('[RiwayatKehadiran] Final filtered:', filtered.length);
+      filtered = filtered.filter(item => {
+        return item.tanggal.startsWith(String(tahun));
+      });
+
+      filtered.sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+      
       setData(filtered);
       setHasSearched(true);
     } catch (err) {
@@ -133,8 +135,10 @@ export default function RiwayatKehadiran() {
         <div className="space-y-3">
           {data.map((item, idx) => {
             const key = `${item.tanggal}|${item.kegiatan}|${item.lokasi}`;
-            const isPast = new Date(item.tanggal) <= new Date();
+            // Safe date compare tanpa new Date()
+            const isPast = item.tanggal <= new Date().toISOString().slice(0, 10);
             const status = statusMap[key] || 'belum';
+            
             return (
               <div
                 key={idx}

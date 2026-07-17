@@ -1,4 +1,4 @@
-# SMPus-Sangkali (Sistem Manajemem Kegiatan)
+# SMPus-Sangkali (Schedule Management Puskesmas Sangkali)
 
 Sistem Informasi Manajemen Kegiatan Puskesmas yang dirancang untuk membantu pengelolaan jadwal kegiatan, penempatan petugas pelayanan, serta proses penyusunan jadwal secara otomatis. Sistem ini juga mendukung integrasi dengan Google Sheets untuk mempermudah pengelolaan data kegiatan.
 

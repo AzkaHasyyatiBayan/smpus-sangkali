@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { apiGet, apiPost } from '@/lib/api';
+import { apiGet, apiPost } from '../../lib/api';
 import { generateExcel, generatePDF, formatTanggal, parsePenyerta } from '@/lib/utils';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';

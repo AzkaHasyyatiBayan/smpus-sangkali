@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { apiPost } from '@/lib/api';
+import { apiPost } from '../../lib/api';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import toast from 'react-hot-toast';
